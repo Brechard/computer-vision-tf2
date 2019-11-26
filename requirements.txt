@@ -1,0 +1,20 @@
+pandas
+numpy
+
+# external requirements
+tensorflow-gpu
+tensorflow-addons
+pillow
+tqdm  # To see progress bar in loops
+opencv-python
+matplotlib
+pytest
+scipy
+scikit-learn
+
+# To visualize the models
+pydot
+graphviz
+
+# local package
+-e .
