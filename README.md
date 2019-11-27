@@ -46,6 +46,8 @@ Download the dataset wanted and save everything it in the data/external/datasets
 The supported datasets are: COCO, GTSD, BDD100K and MAPILLARY Traffic Signs. If you want to use a different one,
 you have to create a method in the src/data/external_to_raw.py folder. You can find more info in that file.
 
+Remember to always execute inside the src folder.
+
     cd src/
     python -m data.make_dataset --dataset_name <dataset_name>
 
@@ -71,7 +73,6 @@ and copy them to models/YOLOv3/
     wget https://pjreddie.com/media/files/yolov3.weights -O models/YOLOv3/yolov3.weights
     wget https://pjreddie.com/media/files/yolov3-tiny.weights -O models/YOLOv3/yolov3-tiny.weights
 
-The same optional parameters as before apply.
 There are 4 ways to fine tune the model:
 - 'all': All the weights of the model will be updated during the training.
 - 'features': Freezes the features extractor (DarkNet) and the rest of the model can be trained.
@@ -79,6 +80,7 @@ There are 4 ways to fine tune the model:
 in reports/figures/(tiny-)yolov3_expanded.png)
 - 'last_conv': Only the last convolutional layer is trainable.
 
+The same optional parameters as before apply. 
 
     python -m models.detection.train_model --trainable <trainable option> --dataset_name <dataset_name>
 
@@ -92,6 +94,7 @@ Optional parameters are:
 - title: title to add to the output image.
 - tiny: by default it uses the full model (use --tiny for the tiny version or --notiny to force the full model).
 
+To use the test image don't set image path.
 
     python -m models.detection.predict --img_path <img_path>
 
@@ -116,6 +119,7 @@ Optional parameters (default values inside the parentheses) are:
 - model_name ('Recognizer'): If you want to give the model another name. Used for saving the model training history.
 - extra (''): any extra information that you want to be saved in the file with the training parameters.
 
+Remember to always execute inside the src folder.
 
     cd src/
     python -m models.recognition.train_model --dataset_name <dataset_name>
