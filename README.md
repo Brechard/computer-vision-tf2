@@ -6,16 +6,14 @@ For object detection, YOLOv3 has been implemented, and for object recognition se
 are available. Take into consideration that they are intended for recognition of traffic signs
 and therefore the models are very small. 
 
-
-Thanks to: https://github.com/zzh8829/yolov3-tf2 and the references on it.
-I've taken several of his functions and used it as a base to check for errors.
+![YOLOv3 architecture](https://github.com/Brechard/computer-vision-tf2/blob/master/reports/figures/YOLOv3_arch_background.png)
 
 ## Features
 - Training from scratch.
 - Transfer learning using the original weights, to datasets with any number of outputs, with 4 options:
     - All the weights of the model can be retrained
     - The DarkNet is frozen and the rest can be retrained
-    - Everything is frozen except the last submodel.
+    - Everything is frozen except the last submodel (those called last_layers_xxx, check images in reports/figures).
     - Everything is frozen except the last convolutional layer.
 - Methods for creating TFRecords implemented that divides them in shards.
 - Data augmentation methods for training.
@@ -25,8 +23,7 @@ I've taken several of his functions and used it as a base to check for errors.
 - Documentation and comments to explain the code.
 - Unittest to prove that transfer learning and the creation of TFRecords works.
 - Method to create a dataset for image recognition from a DS for image detection (helpers.create_recognition_ds_from_detection_ds).
-
-![YOLOv3 architecture](https://github.com/Brechard/computer-vision-tf2/blob/master/reports/figures/YOLOv3_arch_background.png)
+- Methods for beautiful visualization of the predictions with their bounding boxes and probabilities.
 
 # Usage
 When training a model, a folder will be created with the date that started and the dataset used to trained.
@@ -40,6 +37,9 @@ It can be found in models/<model_name>/
     pip install -r requirements.txt
 
 ## Object Detection
+
+![Object Detection prediction example](https://github.com/Brechard/computer-vision-tf2/blob/master/reports/figures/test_image_out.png)
+
 ### Create the TFRecords files
 Download the dataset wanted and save everything it in the data/external/datasets/<dataset_name> folder.
 
@@ -75,7 +75,8 @@ The same optional parameters as before apply.
 There are 4 ways to fine tune the model:
 - 'all': All the weights of the model will be updated during the training.
 - 'features': Freezes the features extractor (DarkNet) and the rest of the model can be trained.
-- 'last_block': Only the last block of convolutional layers are trainable.
+- 'last_block': Only the last block of convolutional layers are trainable. (those called last_layers_xxx, check images 
+in reports/figures/(tiny-)yolov3_expanded.png)
 - 'last_conv': Only the last convolutional layer is trainable.
 
 
@@ -115,6 +116,8 @@ Optional parameters (default values inside the parentheses) are:
 - model_name ('Recognizer'): If you want to give the model another name. Used for saving the model training history.
 - extra (''): any extra information that you want to be saved in the file with the training parameters.
 
+
+    cd src/
     python -m models.recognition.train_model --dataset_name <dataset_name>
 
 ### Predict
@@ -161,3 +164,8 @@ to translate from neuron to class. This two files are created when training the 
 --------
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+
+## References
+Thanks to: https://github.com/zzh8829/yolov3-tf2 and the references on it.
+I've taken several of his functions and used it as a base to check for errors.
+
