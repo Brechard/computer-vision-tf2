@@ -2,13 +2,31 @@
 
 Implementation of models for object detection and object recognition using TensorFlow 2.0.
 
-For object detection, YOLOv3 has been implemented, and for object recognition severl models
-are available. Take into consideration that they are intented for recognition of traffic signs
-and therefore they models are very small. 
+For object detection, YOLOv3 has been implemented, and for object recognition several models
+are available. Take into consideration that they are intended for recognition of traffic signs
+and therefore the models are very small. 
 
 
 Thanks to: https://github.com/zzh8829/yolov3-tf2 and the references on it.
 I've taken several of his functions and used it as a base to check for errors.
+
+## Features
+- Training from scratch.
+- Transfer learning using the original weights, to datasets with any number of outputs, with 4 options:
+    - All the weights of the model can be retrained
+    - The DarkNet is frozen and the rest can be retrained
+    - Everything is frozen except the last submodel.
+    - Everything is frozen except the last convolutional layer.
+- Methods for creating TFRecords implemented that divides them in shards.
+- Data augmentation methods for training.
+- Implemented using TensorFlow 2.0 and keras.
+- Full model and tiny model implemented.
+- Integrated with absl-py from abseil.io.
+- Documentation and comments to explain the code.
+- Unittest to prove that transfer learning and the creation of TFRecords works.
+- Method to create a dataset for image recognition from a DS for image detection (helpers.create_recognition_ds_from_detection_ds).
+
+![YOLOv3 architecture](https://github.com/Brechard/computer-vision-tf2/blob/master/reports/figures/YOLOv3_arch_background.png)
 
 # Usage
 When training a model, a folder will be created with the date that started and the dataset used to trained.

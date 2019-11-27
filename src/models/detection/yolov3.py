@@ -168,7 +168,7 @@ class YOLOv3:
             self.checkpoints_path, self.logs_path, self.figs_path = helpers.model_directories(constants.YOLOv3,
                                                                                               dataset.dataset_name)
         else:
-            self.figs_path = constants.PROJECT_PATH + 'docs/figures/'
+            self.figs_path = constants.PROJECT_PATH + 'reports/figures/'
 
         self.n_classes = dataset.n_classes
         self.train_model, self.inference_model = self.create_models(use_plot_model=plot_model)
