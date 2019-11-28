@@ -11,6 +11,14 @@ import constants
 import helpers
 
 
+def add_label_to_plot(ax, c, label, x_min, y_min):
+    color = (0, 0, 0)
+    if use_white_text(c):
+        color = (1, 1, 1)
+    ax.text(x_min, y_min - 2, s=label, fontsize=5, bbox=dict(facecolor=c, linewidth=0, boxstyle='square,pad=0'),
+            color=color)
+
+
 def get_colors(annotations: list, labels: list) -> list:
     """ Find the number of unique labels and assign each of them a color from the predefined set randomly """
     for bbox in annotations:
@@ -191,15 +199,6 @@ def plot_image_annotations_simple(image_path: str, title: str = ""):
     plot_image_annotations(image_path, annotations, labels_map_dict, title=title)
 
 
-def add_label_to_plot(ax, c, label, x_min, y_min):
-    # Add the label text with same color as the corresponding bounding box
-    if np.array_equal(c, (0, 0, 0)):
-        ax.text(x_min, y_min - 2, s=label, fontsize=5, bbox=dict(facecolor=c, linewidth=0, boxstyle='square,pad=0'),
-                color=(1, 1, 1))
-    else:
-        ax.text(x_min, y_min - 2, s=label, fontsize=5, bbox=dict(facecolor=c, linewidth=0, boxstyle='square,pad=0'))
-
-
 def plot_images_and_boxes(img, boxes, switch=False, multi=True, i=None, title="", dataset_name=None, colors=None):
     if type(boxes) != np.ndarray:
         boxes = np.array(boxes)
@@ -238,6 +237,13 @@ def plot_images_and_boxes(img, boxes, switch=False, multi=True, i=None, title=""
         return i + 1
     else:
         return i
+
+
+def use_white_text(color):
+    """ Following W3C guidelines, when the luminance is bigger than 0.179, the text should be blank,
+        white otherwise. """
+    luminance = 0.2126 * color[0] + 0.7152 * color[1] + 0.0722 * color[2]
+    return luminance <= 0.179
 
 
 def visualize_box(boxes, image, i):

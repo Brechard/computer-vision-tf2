@@ -22,8 +22,10 @@ and therefore the models are very small.
 - Integrated with absl-py from abseil.io.
 - Documentation and comments to explain the code.
 - Unittest to prove that transfer learning and the creation of TFRecords works.
-- Method to create a dataset for image recognition from a DS for image detection (helpers.create_recognition_ds_from_detection_ds).
-- Methods for beautiful visualization of the predictions with their bounding boxes and probabilities.
+- Method to create a dataset for image recognition from a DS for image detection 
+(helpers.create_recognition_ds_from_detection_ds).
+- Methods for beautiful visualization of the predictions with their bounding boxes and probabilities using W3C 
+recommendations for text color.
 
 # Usage
 When training a model, a folder will be created with the date that started and the dataset used to trained.
