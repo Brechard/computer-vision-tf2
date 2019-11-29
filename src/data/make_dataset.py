@@ -59,14 +59,14 @@ def convert_to_jpeg(dataset_name: str, ppm_path: str):
     print(constants.C_OKGREEN, 'data.make_dataset.convert_to_jpeg. Finished', constants.C_ENDC)
 
 
-def create_annotations_dict_csv(dataset_name: str, train_val_test: str):
+def create_annotations_dict(dataset_name: str, train_val_test: str):
     """ Creates a dictionary where the keys are the filenames and the values a list of the bounding boxes from csv
         for training, test or both if the flag is None """
 
     annotations_dict_path = constants.ANNOTATIONS_DICT_PATH.format(dataset_name, train_val_test)
     if exists(annotations_dict_path):
         return helpers.get_annotations_dict(dataset_name, train_val_test)
-    print(constants.C_OKBLUE, 'data.make_dataset.create_annotations_dict_csv. Started.', dataset_name,
+    print(constants.C_OKBLUE, 'data.make_dataset.create_annotations_dict. Started.', dataset_name,
           train_val_test, constants.C_ENDC)
     annotations_df = pd.read_csv(constants.ANNOTATIONS_CSV_PATH.format(dataset_name, train_val_test))
     annotations_dict = {}
@@ -79,7 +79,7 @@ def create_annotations_dict_csv(dataset_name: str, train_val_test: str):
             list(annotations_df.iloc[index][['xmin', 'ymin', 'xmax', 'ymax', 'label']]))
 
     pickle.dump(annotations_dict, open(annotations_dict_path, "wb"))
-    print(constants.C_OKBLUE, 'data.make_dataset.create_annotations_dict_csv. Finished.', dataset_name,
+    print(constants.C_OKBLUE, 'data.make_dataset.create_annotations_dict. Finished.', dataset_name,
           train_val_test, constants.C_ENDC)
     return annotations_dict
 
@@ -91,7 +91,7 @@ def create_tfrecords(dataset_name: str, train_val_test: str):
     images_path = constants.DATASET_PATH.format(dataset_name) + train_val_test + '/'
     annotations_dict = helpers.get_annotations_dict(dataset_name, train_val_test)
     if annotations_dict is None:
-        annotations_dict = create_annotations_dict_csv(dataset_name, train_val_test)
+        annotations_dict = create_annotations_dict(dataset_name, train_val_test)
 
     print(constants.C_OKBLUE, 'data.make_dataset.create_tfrecords. Started for', dataset_name,
           train_val_test, constants.C_ENDC)
@@ -163,7 +163,7 @@ def create_data(_argv):
         external_to_raw[dataset_name]()
         for train_val_test in [constants.TRAIN, constants.VAL, constants.TEST]:
             try:
-                create_annotations_dict_csv(dataset_name, train_val_test)
+                create_annotations_dict(dataset_name, train_val_test)
                 create_tfrecords(dataset_name, train_val_test)
             except FileNotFoundError as e:
                 print(constants.C_FAIL, "Error when processing dataset", dataset_name, train_val_test, constants.C_ENDC)

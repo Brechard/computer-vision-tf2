@@ -15,7 +15,7 @@ from visualization.visualize import plot_history
 def train(model, epochs, train_data, val_data, save_freq, initial_lr, train_info, use_fit_generator, use_cosine_lr):
     """
     Standar method to train the model received.
-    :param model: Model to train.
+    :param model: Model to train already compiled.
     :param epochs: Number of epochs to train the model.
     :param train_data: Train data as tf.data.Dataset or keras ImageDataGenerator if use_fit_generator.
     :param val_data: Validation data as tf.data.Dataset or keras ImageDataGenerator if use_fit_generator.

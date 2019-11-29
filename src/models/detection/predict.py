@@ -5,6 +5,7 @@ from absl import app, flags
 import constants
 import helpers
 import visualization.visualize as visualize
+from data.dataset import Dataset
 from models.detection.yolov3 import YOLOv3
 
 FLAGS = flags.FLAGS
@@ -45,6 +46,7 @@ def detect(model, dataset_name: str, image_path: str, title: str = "", output_pa
 def main(_argv):
     model = YOLOv3(tiny=FLAGS.tiny)
     if FLAGS.weights_path:
+        model.load_models(Dataset(FLAGS.dataset_name), for_training=False)
         model.inference_model.load_weights(FLAGS.weights_path)
         print(constants.C_OKBLUE, "Weights from", FLAGS.weights_path, 'loaded successfully', constants.C_ENDC)
     else:

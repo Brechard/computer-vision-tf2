@@ -5,16 +5,17 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-import helpers
+import constants
+from data import make_dataset
 from data.dataset import Dataset
-from data.make_dataset import image_example
 
 
 class TFRecordTest(unittest.TestCase):
     def test_create_tfrecords(self):
-        dataset = Dataset("COCO")
-        images_path = '/home/brechard/PycharmProjects/modeling/data/external/datasets/COCO/train/'
-        annotations_dict = helpers.get_annotations_dict('COCO', 'train')
+        dataset_name = constants.MAPILLARY_TS
+        dataset = Dataset(dataset_name)
+        images_path = constants.DATASET_PATH.format(dataset_name) + '/train/'
+        annotations_dict = make_dataset.create_annotations_dict(dataset_name, 'train')
         for i, filename in enumerate(os.listdir(images_path)):
             if np.random.random() >= 0.01:
                 continue
@@ -32,7 +33,7 @@ class TFRecordTest(unittest.TestCase):
                 annotations = annotations_list = [[0.0, 0.0, 0.0, 0.0, 0.0]]
             annotations = np.array(annotations, dtype=np.float32)
 
-            tf_example = image_example(image_string, annotations_list, filename)
+            tf_example = make_dataset.image_example(image_string, annotations_list, filename)
 
             file_path = 'data.tfrecords'
             with tf.io.TFRecordWriter(file_path) as writer:
