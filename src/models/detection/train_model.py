@@ -73,6 +73,10 @@ def train_detection(_argv):
     if gpu_aval:
         train_info += "    - {} gpu{} available for training\n".format(gpus, 's' if gpus > 1 else '')
     train_info += "    - Use {} version of the model\n".format('tiny' if FLAGS.tiny else 'full')
+    if FLAGS.trainable != 'none':
+        train_info += "    - Use transfer learning with trainable option: {} \n".format(FLAGS.trainable)
+    else:
+        train_info += "    - Train from scratch\n"
 
     print(constants.C_WARNING, FLAGS.extra.replace('\\n', '\n'), constants.C_ENDC)
 
