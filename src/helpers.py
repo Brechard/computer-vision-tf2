@@ -1,6 +1,5 @@
 import datetime
 import json
-import pickle
 import re
 import shutil
 from os import makedirs
@@ -135,8 +134,8 @@ def get_annotations_dict(dataset_name: str, train_val_test: str):
     annotations_dict_path = constants.ANNOTATIONS_DICT_PATH.format(dataset_name, train_val_test)
 
     if exists(annotations_dict_path):
-        with open(annotations_dict_path, "rb") as ann_dict_file:
-            annotations_dict = pickle.load(ann_dict_file)
+        with open(annotations_dict_path, "r") as ann_dict_file:
+            annotations_dict = json.load(ann_dict_file)
         return annotations_dict
     return None
 

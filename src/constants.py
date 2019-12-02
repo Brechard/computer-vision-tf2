@@ -61,7 +61,7 @@ INTERIM_FOLDER_PATH = PROJECT_PATH + 'data/interim/'
 # key (string): filename
 # value (list): list of bounding boxes that correspond to the filename each with format:
 #                   [x_min, y_min, x_max, y_max, label]
-ANNOTATIONS_DICT_PATH = INTERIM_FOLDER_PATH + 'annotations_{}_{}_dict.p'
+ANNOTATIONS_DICT_PATH = INTERIM_FOLDER_PATH + 'annotations_{}_{}_dict.json'
 #                                              annotations_DATASET_TRAIN/VAL/TEST_dict.p
 
 #   Processed paths

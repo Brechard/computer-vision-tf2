@@ -22,7 +22,7 @@ class TFRecordTest(unittest.TestCase):
                 continue
             total_analyzed += 1
             image_path = images_path + filename
-            image_string = open(images_path + '/' + filename, 'rb').read()
+            image_string = open(images_path + '/' + filename, 'rb')
             annotations = []
             if filename in annotations_dict:
                 height, width, _ = cv2.imread(image_path).shape
@@ -36,8 +36,8 @@ class TFRecordTest(unittest.TestCase):
                 no_annotations += 1
             annotations = np.array(annotations, dtype=np.float32)
 
-            tf_example = make_dataset.image_example(image_string, annotations_list, filename)
-
+            tf_example = make_dataset.image_example(image_string.read(), annotations_list, filename)
+            image_string.close()
             file_path = 'data.tfrecords'
             with tf.io.TFRecordWriter(file_path) as writer:
                 writer.write(tf_example.SerializeToString())

@@ -1,6 +1,6 @@
 import imghdr
+import json
 import os
-import pickle
 from os.path import exists
 
 import cv2
@@ -76,9 +76,10 @@ def create_annotations_dict(dataset_name: str, train_val_test: str):
         if image_name not in annotations_dict:
             annotations_dict[image_name] = []
         annotations_dict[image_name].append(
-            list(annotations_df.iloc[index][['xmin', 'ymin', 'xmax', 'ymax', 'label']]))
+            [int(i) for i in annotations_df.iloc[index][['xmin', 'ymin', 'xmax', 'ymax', 'label']].values])
 
-    pickle.dump(annotations_dict, open(annotations_dict_path, "wb"))
+    with open(annotations_dict_path, 'w') as fp:
+        json.dump(annotations_dict, fp, indent=4)
     print(constants.C_OKBLUE, 'data.make_dataset.create_annotations_dict. Finished.', dataset_name,
           train_val_test, constants.C_ENDC)
     return annotations_dict
