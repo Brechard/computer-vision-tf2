@@ -16,9 +16,11 @@ class TFRecordTest(unittest.TestCase):
         dataset = Dataset(dataset_name)
         images_path = constants.DATASET_PATH.format(dataset_name) + '/train/'
         annotations_dict = make_dataset.create_annotations_dict(dataset_name, 'train')
+        no_annotations, total_analyzed = 0, 0
         for i, filename in enumerate(os.listdir(images_path)):
             if np.random.random() >= 0.01:
                 continue
+            total_analyzed += 1
             image_path = images_path + filename
             image_string = open(images_path + '/' + filename, 'rb').read()
             annotations = []
@@ -31,6 +33,7 @@ class TFRecordTest(unittest.TestCase):
                                         annotation[4]])
             else:
                 annotations = annotations_list = [[0.0, 0.0, 0.0, 0.0, 0.0]]
+                no_annotations += 1
             annotations = np.array(annotations, dtype=np.float32)
 
             tf_example = make_dataset.image_example(image_string, annotations_list, filename)
@@ -44,7 +47,7 @@ class TFRecordTest(unittest.TestCase):
                 image, labels = dataset.parse_tfrecord(record, False)
                 labels = labels.numpy()
                 self.assertEqual(np.sum(annotations != labels), 0)
-            # os.remove(file_path)
+        self.assertNotEqual(total_analyzed, no_annotations)
 
 
 if __name__ == '__main__':

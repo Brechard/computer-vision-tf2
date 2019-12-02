@@ -119,7 +119,7 @@ def mapillary_ts():
                 label = labels_map_dict_inverse[annotation['label']]
                 bbox = annotation['bbox']
                 annotations.append(
-                    [file, int(bbox['xmin']), int(bbox['ymin']), int(bbox['xmax']), int(bbox['ymax']), label])
+                    [file + 'jpg', int(bbox['xmin']), int(bbox['ymin']), int(bbox['xmax']), int(bbox['ymax']), label])
         pd.DataFrame(annotations, columns=columns).to_csv(save_path, index=False)
 
     ds_path = constants.DATASET_PATH.format(constants.MAPILLARY_TS)
