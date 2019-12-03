@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, BatchNormalization, LeakyReLU, MaxPool2D, Dense, Flatten, Dropout
+from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPool2D, Dense, Flatten, Dropout
 from tensorflow.keras.regularizers import l2
 
 import constants
@@ -22,16 +22,17 @@ class Recognizer:
                                                                                               self.dataset_name)
         self.img_res = img_res
         self.train_model = tf.keras.models.Sequential([
-            Conv2D(32, 5, 2, 'valid', kernel_regularizer=l2(0.0005), input_shape=(img_res, img_res, 3)),
+            Conv2D(filters=32, kernel_size=(5, 5), kernel_regularizer=l2(0.0005), activation='relu',
+                   input_shape=(img_res, img_res, 3)),
             BatchNormalization(),
-            LeakyReLU(alpha=0.1),
-            MaxPool2D(2, 2, 'same'),
-            Conv2D(64, 3, 1, kernel_regularizer=l2(0.0005)),
-            LeakyReLU(alpha=0.1),
-            MaxPool2D(2, 2, 'same'),
-            Conv2D(128, 1, 1, 'valid', kernel_regularizer=l2(0.0005)),
-            LeakyReLU(alpha=0.1),
-            Conv2D(256, 1, 1, 'valid', kernel_regularizer=l2(0.0005)),
+            MaxPool2D(pool_size=(2, 2)),
+            Conv2D(filters=64, kernel_size=(3, 3), activation='relu', kernel_regularizer=l2(0.0005)),
+            MaxPool2D(pool_size=(2, 2)),
+            Dropout(rate=0.25),
+            Conv2D(filters=64, kernel_size=(3, 3), activation='relu', kernel_regularizer=l2(0.0005)),
+            MaxPool2D(pool_size=(2, 2)),
+            Dropout(rate=0.25),
+            Conv2D(filters=128, kernel_size=(1, 1), activation='relu', kernel_regularizer=l2(0.0005)),
             Dropout(rate=0.5),
             Flatten(),
             Dense(self.n_classes, 'softmax')
