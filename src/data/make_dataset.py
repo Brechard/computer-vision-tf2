@@ -85,6 +85,15 @@ def create_annotations_dict(dataset_name: str, train_val_test: str):
     return annotations_dict
 
 
+def create_label_map_pbtxt(dataset_name: str):
+    """ This kind of label map is used in the google models research repository """
+    labels_dict = helpers.get_labels_dict(dataset_name)
+    with open(constants.LABEL_MAP_PBTXT_PATH.format(dataset_name), 'a') as t:
+        for key, value in labels_dict.items():
+            id = str(int(key) + 1)  # pbtxt files are used in google models and they require id 0 to be background
+            t.write("item {\n name: \"" + value + "\"\n id: " + id + "\n display_name: \"" + value + "\"\n}\n")
+
+
 def create_tfrecords(dataset_name: str, train_val_test: str):
     """ TFRecords allow to create a uniform format that can then be used in several different models """
     tfrecords_path = constants.PROCESSED_PROJECT_FOLDER_PATH + constants.TFRECORDS_PATH
@@ -162,6 +171,7 @@ def create_data(_argv):
 
     for dataset_name in datasets:
         external_to_raw[dataset_name]()
+        create_label_map_pbtxt(dataset_name)
         for train_val_test in [constants.TRAIN, constants.VAL, constants.TEST]:
             try:
                 create_annotations_dict(dataset_name, train_val_test)
