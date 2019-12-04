@@ -26,11 +26,11 @@ def train(model, epochs, train_data, val_data, save_freq, initial_lr, train_info
     :param use_cosine_lr: Flag to use the cosine decay scheduler.
     :return: history from calling fit(_generator) function, history from custom_callbacks.
     """
+    if use_cosine_lr:
+        train_info += "    - Use cosine decay scheduler. Initial LR = " + str(initial_lr)
+    else:
+        train_info += "    - Use constant LR = " + str(initial_lr)
     with open(model.checkpoints_path + 'train_info.txt', 'w') as t:
-        if use_cosine_lr:
-            train_info += "    - Use cosine decay scheduler. Initial LR = " + str(initial_lr)
-        else:
-            train_info += "    - Use constant LR = " + str(initial_lr)
         t.write(train_info)
         last_commit = subprocess.check_output(['git', 'describe', '--always']).strip().decode('UTF-8')
         t.write('\nLast commit: ' + last_commit + '\n')
