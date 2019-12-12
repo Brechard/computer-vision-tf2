@@ -18,6 +18,7 @@ and therefore the models are very small.
 - Methods for creating TFRecords implemented that divides them in shards.
 - Data augmentation methods for training.
 - Implemented using TensorFlow 2.0 and keras.
+- Inference images in Tensorboard.
 - Full model and tiny model implemented.
 - Integrated with absl-py from abseil.io.
 - Documentation and comments to explain the code.

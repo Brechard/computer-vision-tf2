@@ -7,7 +7,9 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import backend as K
 
+import constants
 import helpers
+from visualization import visualize
 
 
 class History(tf.keras.callbacks.Callback):
@@ -208,3 +210,86 @@ class CosineDecayScheduler(tf.keras.callbacks.Callback):
         K.set_value(self.model.optimizer.lr, learning_rate)
         if self.verbose > 0:
             print('\nEpoch {}: setting learning rate to {}.'.format(self.global_epoch + 1, learning_rate))
+
+
+class TensorBoardImagesDetection(tf.keras.callbacks.Callback):
+    """ Add images to the tensorboard logs """
+
+    def __init__(self, inference_model, tfrecords_pattern_path: str, dataset_name: str, model_input_size: int,
+                 freq: int, logs_path: str, n_images=10):
+        """
+        Constructor of the Callback to add images to the tensorboard logs. It will select images randomly from the
+        tfrecords.
+
+        :param inference_model: Model to use for the inference.
+        :param tfrecords_pattern_path: Path to the tfrecords to extract the images to show.
+        :param dataset_name: Name of the dataset used for training.
+        :param model_input_size: Size of the input of the model.
+        :param freq: Frequency to execute the images.
+        :param logs_path: Path to save the logs.
+        :param n_images: Number of images to use.
+        """
+
+        self.inference_model = inference_model
+        self.images, self.images_transformed, self.images_shape, self.groundtruth_ann = [], [], [], []
+        self.save_freq = freq
+        self.epochs_since_last_save = 0
+        self.dataset_name = dataset_name
+        self.logs_path = logs_path
+        files = tf.random.shuffle(tf.io.matching_files(tfrecords_pattern_path))
+        shards = tf.data.Dataset.from_tensor_slices(files)
+        dataset = shards.interleave(tf.data.TFRecordDataset)
+        dataset = dataset.shuffle(buffer_size=800)
+        for tfrecord in dataset.take(n_images):
+            x = tf.io.parse_single_example(tfrecord, constants.IMAGE_FEATURE_MAP)
+            image = tf.image.decode_jpeg(x['image/encoded'], channels=3).numpy()
+            groundtruth_ann = tf.stack([tf.sparse.to_dense(x['image/object/bbox/xmin']),
+                                        tf.sparse.to_dense(x['image/object/bbox/ymin']),
+                                        tf.sparse.to_dense(x['image/object/bbox/xmax']),
+                                        tf.sparse.to_dense(x['image/object/bbox/ymax']),
+                                        tf.sparse.to_dense(x['image/object/class/label'])], axis=1).numpy()
+            groundtruth_ann[:, :-1] = groundtruth_ann[:, :-1] * np.array(
+                [image.shape[1], image.shape[0], image.shape[1], image.shape[0]])
+
+            self.groundtruth_ann.append(groundtruth_ann.astype(np.int32).tolist())
+            self.images.append(image)
+            self.images_transformed.append(helpers.transform_images(image, model_input_size))
+            self.images_shape.append(np.array([image.shape[1], image.shape[0], image.shape[1], image.shape[0]]))
+
+        self.images_transformed = tf.convert_to_tensor(self.images_transformed)
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.epochs_since_last_save += 1
+        if self.epochs_since_last_save < self.save_freq:
+            return
+
+        self.epochs_since_last_save = 0
+        images_annotated = []
+        images_cached = []
+        cache_size = 8
+        for img_idx, image_transformed in enumerate(self.images_transformed):
+            images_cached.append(image_transformed)
+            if img_idx > 0 and (img_idx % cache_size == 0 or img_idx == len(self.images_transformed) - 1):
+                bboxes, scores, classes, _ = self.inference_model(tf.convert_to_tensor(images_cached))
+                for j in range(bboxes.shape[0]):
+                    real_img_idx = img_idx - cache_size + j
+                    img_boxes, img_scores, img_classes = [np.array(elem[j]) for elem in [bboxes, scores, classes]]
+                    annotations = []
+
+                    for object_index in range(len(img_scores)):
+                        bbox = [int(elem) for elem in list(img_boxes[object_index] * self.images_shape[real_img_idx])]
+                        annotations.append(bbox + [int(img_classes[object_index])])
+
+                    images_annotated.append(
+                        visualize.load_tensorboard_image(self.images[real_img_idx], self.groundtruth_ann[real_img_idx],
+                                                         annotations, img_scores, self.dataset_name))
+                images_cached = []
+
+        file_writer = tf.summary.create_file_writer(self.logs_path)
+
+        # Using the file writer, log the reshaped image.
+        with file_writer.as_default():
+            tf.summary.image(name='Groundtruth in the left image. Prediction on the right image.',
+                             data=tf.convert_to_tensor(images_annotated),
+                             step=epoch + 1,
+                             max_outputs=len(images_annotated))

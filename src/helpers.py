@@ -2,6 +2,7 @@ import datetime
 import json
 import re
 import shutil
+import time
 from os import makedirs
 from os.path import exists
 
@@ -155,7 +156,7 @@ def get_n_classes(json_path: str):
 
 def load_fake_dataset_detection(tiny=True):
     x_train = tf.image.decode_jpeg(
-        open('/home/brechard/PycharmProjects/modeling/data/external/datasets/COCO/test/000000000001.jpg', 'rb').read(),
+        open(constants.PROJECT_PATH + 'reports/test_image.jpg', 'rb').read(),
         channels=3)
     x_train = tf.expand_dims(x_train, axis=0)
 
@@ -180,14 +181,14 @@ def load_fake_dataset_detection(tiny=True):
     return dataset
 
 
-def load_fake_dataset_recognition():
+def load_fake_dataset_recognition(img_res):
     # Generate dummy data.
-    data = np.random.random((5, 10, 30, 30, 3))
+    data = np.random.random((5, 10, img_res, img_res, 3))
     labels = np.random.randint(10, size=(5, 10, 1))
 
     train_data = tf.data.Dataset.from_tensor_slices((tf.convert_to_tensor(data), tf.convert_to_tensor(labels)))
 
-    data = np.random.random((5, 10, 30, 30, 3))
+    data = np.random.random((5, 10, img_res, img_res, 3))
     labels = np.random.randint(10, size=(5, 10, 1))
 
     val_data = tf.data.Dataset.from_tensor_slices((tf.convert_to_tensor(data), tf.convert_to_tensor(labels)))
@@ -220,21 +221,41 @@ def natural_keys(text):
     return [atof(c) for c in re.split(r'[+-]?([0-9]+(?:[.][0-9]*)?|[.][0-9]+)', text)]
 
 
-# def parse_tfrecord(tfrecord):
-#     x = tf.io.parse_single_example(tfrecord, constants.IMAGE_FEATURE_MAP)
-#     x_train = tf.image.decode_jpeg(x['image/encoded'], channels=3)
-#     x_train = tf.image.resize(x_train, (100, 100))
-#
-#     y_train = tf.stack([tf.sparse.to_dense(x['image/object/bbox/xmin']),
-#                         tf.sparse.to_dense(x['image/object/bbox/ymin']),
-#                         tf.sparse.to_dense(x['image/object/bbox/xmax']),
-#                         tf.sparse.to_dense(x['image/object/bbox/ymax']),
-#                         tf.sparse.to_dense(x['image/object/class/label'])], axis=1)
-#
-#     paddings = [[0, 100 - tf.shape(y_train)[0]], [0, 0]]
-#     y_train = tf.pad(y_train, paddings)
-#     print("A")
-#     return x_train, y_train
+def save_history(FLAGS, model_name, dataset_name: str, history, start: float, det_rec: str):
+    """
+    Save the history of training in the reports folder.
+    :param FLAGS: FLAGS used for training from absl.
+    :param model_name: Name of the model used for training.
+    :param dataset_name: Name of the dataset used for training.
+    :param history: History from the fit function.
+    :param start: Start of the training from time.time().
+    :param det_rec: 'detection' or 'recognition'
+    """
+    train_time = display_time(int(time.time() - start), 2)
+    val_losses = [model_name, dataset_name,
+                  ('cosine' if FLAGS.use_cosine_lr else 'constant'), FLAGS.lr, train_time]
+    cols = ['model', 'dataset', 'scheduler', 'initial_lr', 'train_time']
+    if det_rec == 'detection':
+        val_losses.append(FLAGS.trainable)
+        cols.append('trainable')
+    train_losses = val_losses.copy()
+
+    for epoch in range(FLAGS.epochs):
+        if epoch >= len(history.history['val_loss']):
+            val_losses.append('-')
+            train_losses.append('-')
+        else:
+            val_losses.append(round(history.history['val_loss'][epoch], 2))
+            train_losses.append(round(history.history['loss'][epoch], 2))
+        cols.append('epoch ' + str(epoch + 1))
+    val_losses = pd.DataFrame([val_losses], columns=cols)
+    train_losses = pd.DataFrame([train_losses], columns=cols)
+    path = constants.PROJECT_PATH + '/reports/' + det_rec + '_{}_losses_epochs-' + str(FLAGS.epochs) + '.csv'
+    if exists(path.format('val')):
+        val_losses = pd.read_csv(path.format('val')).append(val_losses)
+        train_losses = pd.read_csv(path.format('train')).append(train_losses)
+    val_losses.to_csv(path.format('val'), index=False)
+    train_losses.to_csv(path.format('train'), index=False)
 
 
 def transform_images(img, size):

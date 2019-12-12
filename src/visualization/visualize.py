@@ -6,6 +6,7 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 
 import constants
 import helpers
@@ -56,6 +57,41 @@ def histogram_labels(dataset_name: str, double_bins: bool = False, show_labels: 
     plt.show()
 
 
+def load_tensorboard_image(image, groundtruth_ann: list, annotations: list, probs: list, dataset_name: str):
+    labels_map_dict = helpers.get_labels_dict(dataset_name)
+    # Create figure and axes
+    fig, ax = plt.subplots(1)
+    labels = []
+
+    # Get the unique labels to assign a color to each
+    colors = get_colors(groundtruth_ann + annotations, labels)
+    separation = 10
+    # Concatenate the same image with a white space in between
+    new_image = np.concatenate((image, 255 * np.ones((image.shape[0], separation, 3)).astype(np.int32), image), axis=1)
+    # Load the original image with its groundtruth annotations
+    ax.imshow(new_image)
+    for i, bbox in enumerate(groundtruth_ann):
+        if sum(bbox) == 0:
+            continue
+        plot_image_annotations_help(ax=ax, bbox=bbox, colors=colors, labels=labels, labels_map=labels_map_dict,
+                                    show_axis=False)
+    # Load the predicted labels
+    for i, bbox in enumerate(annotations):
+        if sum(bbox) == 0:
+            continue
+        # Move the bounding boxes to the left to align with the second image
+        bbox[:3] = (np.array(bbox[:3]) + (separation + image.shape[1], 0, separation + image.shape[1])).tolist()
+        plot_image_annotations_help(ax=ax, bbox=bbox, colors=colors, labels=labels, labels_map=labels_map_dict,
+                                    show_axis=False, probability=probs[i])
+    # Workaround for returning the image with the annotations as a tensor, save and load it.
+    plt.axis('off')
+    plt.savefig('/tmp/tb_img.png', dpi=500, bbox_inches='tight', pad_inches=0)
+    plt.close()
+    img = tf.image.decode_jpeg(open('/tmp/tb_img.png', 'rb').read(), channels=3)
+    img = tf.cast(tf.image.resize(img, (400, 1200)), tf.uint8)
+    return img
+
+
 def plot_3x3_images_RW(image_paths: list, titles: list):
     """ Plots 3x3 images with their title. The first letter of each image is either a W (Wrong classification) or a
         R (Right classification). """
@@ -72,7 +108,9 @@ def plot_3x3_images_RW(image_paths: list, titles: list):
     plt.show()
 
 
-def plot_history(history: dict, figs_path: str = None):
+def plot_history(history: dict, figs_path: str = None, show_figures: bool = True):
+    if figs_path is None and not show_figures:
+        return
     n_epochs = len(history['loss'])
     epochs = [i + 1 for i in range(n_epochs)]
     plt.plot(epochs, history['loss'], label='Train loss')
@@ -83,7 +121,8 @@ def plot_history(history: dict, figs_path: str = None):
     plt.legend()
     if figs_path:
         plt.savefig(figs_path + 'loss.png')
-    plt.show()
+    if show_figures:
+        plt.show()
 
     if 'accuracy' in history:
         plt.figure()
@@ -95,7 +134,8 @@ def plot_history(history: dict, figs_path: str = None):
         plt.legend()
         if figs_path:
             plt.savefig(figs_path + 'accuracy.png')
-        plt.show()
+        if show_figures:
+            plt.show()
 
     if 'learning_rates' in history:
         plt.figure()
@@ -106,7 +146,8 @@ def plot_history(history: dict, figs_path: str = None):
         plt.legend()
         if figs_path:
             plt.savefig(figs_path + 'lr_schedule.png')
-        plt.show()
+        if show_figures:
+            plt.show()
 
 
 def plot_history_from_pickle_path(path):
@@ -171,7 +212,7 @@ def plot_images_annotations_box(images_path: list, annotations: list, labels_map
     plt.show()
 
 
-def plot_image_annotations_help(ax, bbox, colors, labels, labels_map, axis, probability=None):
+def plot_image_annotations_help(ax, bbox, colors, labels, labels_map, show_axis, probability=None):
     """ Plot the image and its bounding box """
     x_min, y_min, x_max, y_max, label = bbox
     c = colors[labels.index(label)]
@@ -186,7 +227,7 @@ def plot_image_annotations_help(ax, bbox, colors, labels, labels_map, axis, prob
     add_label_to_plot(ax, c, label, x_min, y_min)
     # Add the patch to the Axes
     ax.add_patch(rect)
-    if not axis:
+    if not show_axis:
         ax.axis('off')
 
 

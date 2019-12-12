@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import pandas as pd
 import tensorflow as tf
@@ -116,7 +117,7 @@ def train_recognition(_argv):
 
         print('train_generator.class_indices', train_generator.class_indices)
         print('val_generator.class_indices', val_generator.class_indices)
-
+        start = time.time()
         history, history_callback = train.train(model=model,
                                                 epochs=FLAGS.epochs,
                                                 train_data=train_generator,
@@ -143,9 +144,11 @@ def train_recognition(_argv):
     else:
         print("Train with fake data")
         train_data, val_data = helpers.load_fake_dataset_recognition()
+        start = time.time()
         history, history_callback = train.train(model, FLAGS.epochs, train_data, val_data, FLAGS.save_freq,
                                                 FLAGS.lr, 'Use FAKE DS\n', False, FLAGS.use_cosine_lr)
 
+    helpers.save_history(FLAGS, model.model_name, model.dataset_name, history, start, 'recognition')
     return model, history, history_callback
 
 

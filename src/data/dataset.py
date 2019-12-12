@@ -30,7 +30,7 @@ class Dataset:
             if train:
                 shards = shards.repeat(10)
             dataset = shards.interleave(tf.data.TFRecordDataset)
-            dataset = dataset.shuffle(buffer_size=10000)
+            dataset = dataset.shuffle(buffer_size=800)
             # for i in dataset:
             #     self.parse_tfrecord(i)
             #     pib((x_train + 1) / 2, y_train, dataset_name="COCO")

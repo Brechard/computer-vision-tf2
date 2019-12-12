@@ -1,9 +1,13 @@
+import time
+
 import tensorflow as tf
 from absl import app, flags
 from tensorflow.python.client import device_lib
 
 import constants
+import helpers
 from data.dataset import Dataset
+from models import custom_callbacks
 from models import train
 from models.detection.yolov3 import YOLOv3
 
@@ -61,8 +65,21 @@ def train_detection(_argv):
         dataset, model = load_model_and_db(FLAGS.batch_size)
 
     if FLAGS.dataset_name == '':
+        tfrecords_pattern_path = constants.PROCESSED_PROJECT_FOLDER_PATH + \
+                                 constants.TFRECORDS_PATH.format('COCO', 'val', '*-of-*')
+        tensorboard_imgs = custom_callbacks.TensorBoardImagesDetection(
+            inference_model=model.inference_model,
+            tfrecords_pattern_path=tfrecords_pattern_path,
+            dataset_name='COCO',
+            model_input_size=model.image_res,
+            freq=FLAGS.save_freq,
+            logs_path=model.logs_path,
+            n_images=5)
+        start = time.time()
         history, history_callback = train.train(model, FLAGS.epochs, dataset.train_data, dataset.validation_data,
-                                                FLAGS.save_freq, FLAGS.lr, 'Use fake DS\n', False, True)
+                                                FLAGS.save_freq, FLAGS.lr, 'Use fake DS\n', False, True,
+                                                extra_callbacks=[tensorboard_imgs])
+        helpers.save_history(FLAGS, model.model_name, dataset.dataset_name, history, start, 'detection')
         return model, history
 
     train_info = FLAGS.extra.replace('\\n', '\n') + '\n'
@@ -80,6 +97,15 @@ def train_detection(_argv):
 
     print(constants.C_WARNING, FLAGS.extra.replace('\\n', '\n'), constants.C_ENDC)
 
+    tfrecords_pattern_path = dataset.tf_paths.format(dataset.dataset_name, 'val', '*-of-*')
+    tensorboard_imgs = custom_callbacks.TensorBoardImagesDetection(inference_model=model.inference_model,
+                                                                   tfrecords_pattern_path=tfrecords_pattern_path,
+                                                                   dataset_name=dataset.dataset_name,
+                                                                   model_input_size=model.image_res,
+                                                                   freq=FLAGS.save_freq,
+                                                                   logs_path=model.logs_path,
+                                                                   n_images=10)
+    start = time.time()
     history, history_callback = train.train(model=model,
                                             epochs=FLAGS.epochs,
                                             train_data=dataset.train_data,
@@ -88,8 +114,10 @@ def train_detection(_argv):
                                             initial_lr=FLAGS.lr,
                                             train_info=train_info,
                                             use_fit_generator=False,
-                                            use_cosine_lr=FLAGS.use_cosine_lr)
+                                            use_cosine_lr=FLAGS.use_cosine_lr,
+                                            extra_callbacks=[tensorboard_imgs])
 
+    helpers.save_history(FLAGS, model.model_name, dataset.dataset_name, history, start, 'detection')
     return model, history
 
 
