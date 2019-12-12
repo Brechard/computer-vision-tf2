@@ -26,7 +26,10 @@ def get_colors(annotations: list, labels: list) -> list:
         x_min, y_min, x_max, y_max, label = bbox
         if label not in labels:
             labels.append(label)
-    colors = np.array(sample(constants.colors, len(labels))) / 255
+    if len(labels) < len(constants.colors):
+        colors = np.array(sample(constants.colors, len(labels))) / 255
+    else:
+        colors = np.array(constants.colors * (int(len(labels) / len(constants.colors)) + 1)) / 255
     return colors
 
 
