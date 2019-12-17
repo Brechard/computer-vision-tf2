@@ -27,6 +27,7 @@ and therefore the models are very small.
 (helpers.create_recognition_ds_from_detection_ds).
 - Methods for beautiful visualization of the predictions with their bounding boxes and probabilities using W3C 
 recommendations for text color.
+- Extended image augmentation techniques.
 
 # Usage
 When training a model, a folder will be created with the date that started and the dataset used to trained.
@@ -121,6 +122,7 @@ Optional parameters (default values inside the parentheses) are:
 - use_cosine_lr (True): flag to use cosine decay scheduler for the learning rate.
 - model_name ('Recognizer'): If you want to give the model another name. Used for saving the model training history.
 - extra (''): any extra information that you want to be saved in the file with the training parameters.
+- simple_aug (False): Flag to use simple images augmentation techniques or more complex ones.
 
 Remember to always execute inside the src folder.
 

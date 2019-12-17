@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 import constants
 import helpers
+from data.custom_img_data_generator import Generator
 from models import train
 from models.recognition.recognizer import Recognizer
 
@@ -30,6 +31,7 @@ flags.DEFINE_float("lr", 2e-3, "Learning rate")
 
 # Boolean
 flags.DEFINE_boolean("use_cosine_lr", True, "Use cosine learning rate scheduler")
+flags.DEFINE_boolean("simple_aug", False, "Apply only simple data augmentations.")
 
 
 def train_recognition(_argv):
@@ -83,40 +85,50 @@ def train_recognition(_argv):
         ds_directory = constants.DATASET_PATH.format(FLAGS.dataset_name)
         train_directory = ds_directory + "train"
 
-        generator = tf.keras.preprocessing.image.ImageDataGenerator(
-            rescale=1. / 255.0,
-            validation_split=0.1,
-            rotation_range=20,
-            height_shift_range=0.2,
-            width_shift_range=0.2,
-            zoom_range=0.1,
-            shear_range=0.1,
-            brightness_range=(0.2, 0.8)
-        )
+        if FLAGS.simple_aug:
+            generator = tf.keras.preprocessing.image.ImageDataGenerator(
+                rescale=1. / 255.0,
+                validation_split=0.1,
+                rotation_range=20,
+                height_shift_range=0.2,
+                width_shift_range=0.2,
+                zoom_range=0.3,
+                shear_range=0.3,
+                brightness_range=(0.2, 0.8)
+            )
+            train_generator = generator.flow_from_directory(
+                train_directory,
+                target_size=(img_res, img_res),
+                batch_size=batch_size,
+                class_mode='categorical',
+                subset='training'
+            )
+            val_generator = generator.flow_from_directory(
+                train_directory,
+                target_size=(img_res, img_res),
+                batch_size=batch_size,
+                class_mode='categorical',
+                subset='validation'
+            )
+            class_to_neuron_dict = train_generator.class_indices
+        else:
+            generator = Generator(directory=train_directory,
+                                  batch_size=FLAGS.batch_size,
+                                  image_dimensions=(img_res, img_res),
+                                  validation_split=0.1)
+            train_generator = generator.train_generator
+            val_generator = generator.val_generator
+            class_to_neuron_dict = generator.class_indices
 
-        train_generator = generator.flow_from_directory(
-            train_directory,
-            target_size=(img_res, img_res),
-            batch_size=batch_size,
-            class_mode='categorical',
-            subset='training'
-        )
-
-        val_generator = generator.flow_from_directory(
-            train_directory,
-            target_size=(img_res, img_res),
-            batch_size=batch_size,
-            class_mode='categorical',
-            subset='validation'
-        )
-
-        class_to_neuron_dict = train_generator.class_indices
         neuron_to_class_dict = {}
-        for k, v in class_to_neuron_dict.items():
-            neuron_to_class_dict[str(v)] = str(k)
+        labels_dict = helpers.get_labels_dict(model.dataset_name)
+        neuron_labels = []
+        for class_id, neuron in class_to_neuron_dict.items():
+            neuron_to_class_dict[str(neuron)] = str(class_id)
+            neuron_labels.append(labels_dict[str(neuron)])
 
-        print('train_generator.class_indices', train_generator.class_indices)
-        print('val_generator.class_indices', val_generator.class_indices)
+        print('class_to_neuron_dict', class_to_neuron_dict)
+
         start = time.time()
         history, history_callback = train.train(model=model,
                                                 epochs=FLAGS.epochs,
@@ -130,20 +142,23 @@ def train_recognition(_argv):
 
         model.train_model.save_weights(model.checkpoints_path + 'weights.ckpt')
 
-        with open(model.checkpoints_path + 'neuron_to_class_dict.json', 'w') as fp:
-            json.dump(neuron_to_class_dict, fp, indent=4)
-
         test_acc = 100 * test_model(model, neuron_to_class_dict)
         history_callback.test_acc = test_acc
         print(constants.C_OKGREEN, "Test accuracy {:0.2f} %".format(test_acc),
               constants.C_ENDC)
 
+        with open(model.checkpoints_path + 'neuron_to_class_dict.json', 'w') as fp:
+            json.dump(neuron_to_class_dict, fp, indent=4)
         with open(model.checkpoints_path + 'train_info.txt', 'a') as t:
             t.write("Test accuracy {:0.2f} %".format(test_acc))
+        with open(model.checkpoints_path + 'neuron_labels.txt', 'a') as t:
+            for label in neuron_labels:
+                t.write(label + '\n')
+
 
     else:
         print("Train with fake data")
-        train_data, val_data = helpers.load_fake_dataset_recognition()
+        train_data, val_data = helpers.load_fake_dataset_recognition(img_res)
         start = time.time()
         history, history_callback = train.train(model, FLAGS.epochs, train_data, val_data, FLAGS.save_freq,
                                                 FLAGS.lr, 'Use FAKE DS\n', False, FLAGS.use_cosine_lr)
