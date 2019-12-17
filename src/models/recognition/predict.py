@@ -21,9 +21,10 @@ flags.DEFINE_integer("img_res", 50, "Image resolution used when training.")
 
 def classify_image(dir_path: str, img_path: str, dataset_name: str, img_res: int):
     """
-    Classify the given image with the given model. In the model directory there must to be two files:
-        1. Weights of the model.
-        2. Dictionary in a json to translate from neuron to class.
+    Classify the given image with the given model.
+    In the model directory there must to be two files:
+        1. Weights of the model. Named: 'weights.ckpt'
+        2. Dictionary in a json to translate from neuron to class. Named: 'neuron_to_class_dict.json'
 
     :param dir_path: Path to the directory
     :param img_path: Path to the image

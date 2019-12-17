@@ -1,6 +1,6 @@
 import collections
+import json
 import os
-import pickle
 from random import sample
 
 import matplotlib.pyplot as plt
@@ -15,12 +15,32 @@ from models.recognition.recognizer import Recognizer
 from visualization.visualize import plot_3x3_images_RW
 
 
-def analyze(checkpoint_dir_path: str, dataset_name: str = constants.GTSR, model_img_res: int = 30, plot: bool = False,
+def analyze(checkpoint_dir_path: str, dataset_name: str = constants.GTSR, model_img_res: int = 50, plot: bool = False,
             n_plots: int = 10, verbose: int = 0):
-    with open(checkpoint_dir_path + 'neuron_to_class_dict.p', "rb") as f:
-        neuron_to_class_dict = pickle.load(f)
+    """
+    Method to analyze the performance of a model in recognition. Calculates the test accuracy, which classes
+    are misclassified and as what and plots the error rate per class, showing only the label of those that
+    have a worse error rate than the average.
+    In the directory there must to be two files:
+        1. Weights of the model. Named: 'weights.ckpt'
+        2. Dictionary in a json to translate from neuron to class. Named: 'neuron_to_class_dict.json'
 
-    model = Recognizer(dataset_name, model_img_res, False, 'mini')
+    In the dataset folder, it expects a csv file with a Path and a ClassId column.
+    Tha path column should have the path of each image and the ClassId column the class of each image,
+    this classes have to be the same as the folder names in the training set.
+
+    :param checkpoint_dir_path: Path to the directory.
+    :param dataset_name: Name of the dataset used.
+    :param model_img_res: Image resolution to use.
+    :param plot: Whether to plot results in 3x3 images or not. The label will be green when correctly classified,
+    red otherwise.
+    :param n_plots: Number of plots to show.
+    :param verbose: If > 0 it will print for every image if it was correctly or not.
+    """
+    with open(checkpoint_dir_path + 'neuron_to_class_dict.json', "rb") as f:
+        neuron_to_class_dict = json.load(f)
+
+    model = Recognizer(dataset_name, model_img_res, False)
     model.inference_model.load_weights(checkpoint_dir_path + 'weights.ckpt')
     images_path = constants.DATASET_PATH.format(dataset_name) + 'test/'
 
@@ -52,7 +72,7 @@ def analyze(checkpoint_dir_path: str, dataset_name: str = constants.GTSR, model_
             n_wrong += 1
         if verbose > 0:
             img_class_prob = np.max(img_classes_probs.numpy())
-            if real_class_id != img_class_id:
+            if real_class_id == img_class_id:
                 print(constants.C_OKBLUE, "Correctly labeled as", model.labels_map_dict[str(img_class_id)].upper(),
                       'with probability {:.2f} %'.format(100 * img_class_prob), constants.C_ENDC)
             else:
@@ -72,15 +92,18 @@ def analyze(checkpoint_dir_path: str, dataset_name: str = constants.GTSR, model_
 
     error_rate = 100 * n_wrong / total
     for real_class, value in classified.items():
-        print('Class', real_class)
+        print('Class', real_class, "({}):".format(model.labels_map_dict[real_class]))
         for pred_class, times in value.items():
             if pred_class != real_class:
-                print("Misslabeled for class", pred_class, '->', times, 'times')
+                print("  - Misslabeled for class", pred_class, '->', times, 'times',
+                      "({})".format(model.labels_map_dict[pred_class]))
             else:
-                print("Correctly labeled", times, 'times')
+                print("  - Correctly labeled", times, 'times')
         print()
 
-    print("Error rate (% of missclassified) = {:.2f} % in test.".format(error_rate))
+    print(
+        constants.C_FAIL + "Error rate (% of missclassified) = {:.2f} % in test.".format(error_rate) + constants.C_ENDC)
+    print(constants.C_OKBLUE + "Test accuracy of {:.2f} % in test.".format(100 - error_rate) + constants.C_ENDC)
     miss_class_perc = {}
     for real_class, predictions in classified.items():
         total = 0
@@ -90,6 +113,11 @@ def analyze(checkpoint_dir_path: str, dataset_name: str = constants.GTSR, model_
             if real_class != pred_class:
                 wrong += times
             miss_class_perc[real_class] = 100 * wrong / total
+
+    ordered_dict = {}
+    for key in sorted(miss_class_perc.keys(), key=helpers.natural_keys):
+        ordered_dict[key] = miss_class_perc[key]
+    miss_class_perc = ordered_dict
 
     def plot_helper(show_labels):
         fig, ax = plt.subplots(1, 1)
