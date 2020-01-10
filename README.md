@@ -123,7 +123,7 @@ Optional parameters (default values inside the parentheses) are:
 - use_cosine_lr (True): flag to use cosine decay scheduler for the learning rate.
 - model_name ('Recognizer'): If you want to give the model another name. Used for saving the model training history.
 - extra (''): any extra information that you want to be saved in the file with the training parameters.
-- simple_aug (False): Flag to use simple images augmentation techniques or more complex ones.
+- simple_aug (False): Flag to use simple image augmentation techniques or more complex ones.
 - tflite (False): Flag to convert the model to tflite and save it in the checkpoints directory when finished training.
 
 Remember to always execute inside the src folder.

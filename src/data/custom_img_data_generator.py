@@ -100,34 +100,40 @@ def sometimes(aug):
 seq = iaa.Sequential([
     # crop images by -5% to 10% of their height/width
     sometimes(iaa.CropAndPad(
-        percent=(-0.05, 0.1),
+        percent=(-0.1, 0.2),
         pad_mode=ia.ALL,
         pad_cval=(0, 255)
     )),
-    sometimes(iaa.Affine(
-        scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
-        # scale images to 80-120% of their size, individually per axis
-        translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
-        # translate by -20 to +20 percent (per axis)
-        rotate=(-20, 20),  # rotate by -20 to +20 degrees
-        shear=(-20, 20),  # shear by -20 to +20 degrees
-        order=[0, 1],
-        # use nearest neighbour or bilinear interpolation (fast)
-        cval=(0, 255),  # if mode is constant, use a cval between 0 and 255
-        mode=ia.ALL
-        # use any of scikit-image's warping modes (see 2nd image from the top for examples)
-    )),
-    # execute 0 to 5 of the following (less important) augmenters per image
+    sometimes(
+        iaa.OneOf([
+            iaa.Affine(
+                scale={"x": (0.6, 1.2), "y": (0.6, 1.2)},
+                # scale images to 80-120% of their size, individually per axis
+                translate_percent={"x": (-0.3, 0.3), "y": (-0.3, 0.3)},
+                # translate by -20 to +20 percent (per axis)
+                rotate=(-20, 20),  # rotate by -20 to +20 degrees
+                shear=(-30, 30),  # shear by -20 to +20 degrees
+                order=[0, 1],
+                # use nearest neighbour or bilinear interpolation (fast)
+                cval=(0, 255),  # if mode is constant, use a cval between 0 and 255
+                mode=ia.ALL
+                # use any of scikit-image's warping modes (see 2nd image from the top for examples)
+            ),
+            iaa.PerspectiveTransform(scale=(0.025, 0.2), cval=(0, 255)),
+            iaa.ElasticTransformation(alpha=(0.1, 60))
+        ])
+    ),
+    # execute 0 to 3 of the following (less important) augmenters per image
     # don't execute all of them, as that would often be way too strong
-    iaa.SomeOf((0, 5),
+    iaa.SomeOf((0, 3),
                [
                    # Create some super-pixels
                    sometimes(iaa.Superpixels(p_replace=(0, 0.5), n_segments=(2, 10))),
                    # Blur the image
                    iaa.OneOf([
                        iaa.GaussianBlur((0, 1.0)),
-                       iaa.AverageBlur(k=(1, 7)),
-                       iaa.MedianBlur(k=(1, 7)),
+                       iaa.AverageBlur(k=(3, 7)),
+                       iaa.MedianBlur(k=(3, 7)),
                    ]),
                    # Convolutional operations
                    iaa.OneOf([
@@ -153,19 +159,16 @@ seq = iaa.Sequential([
                    ]),
                    # Dropout some pixels
                    iaa.OneOf([
-                       iaa.Dropout((0.01, 0.05), per_channel=0.5),
-                       # randomly remove up to 10% of the pixels
+                       iaa.Dropout((0.01, 0.1), per_channel=0.5),
                        iaa.CoarseDropout((0.01, 0.1),
-                                         size_percent=(0.1, 0.5),
+                                         size_percent=(0.01, 0.5),
                                          per_channel=0.5),
+                       iaa.SaltAndPepper((0.01, 0.3))
                    ]),
                    # Play with the colors of the image
                    iaa.OneOf([
-                       # Invert color channels
                        iaa.Invert(0.01, per_channel=0.5),
-                       # Add hue and saturation
-                       iaa.AddToHueAndSaturation((-45, 45)),
-                       # Multiply hue and saturation
+                       iaa.AddToHueAndSaturation((-1, 1)),
                        iaa.MultiplyHueAndSaturation((-1, 1))
                    ]),
                    # Change brightness and contrast
@@ -184,13 +187,13 @@ seq = iaa.Sequential([
                    sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.05))),
                    # sometimes move parts of the image around
                    sometimes(iaa.PerspectiveTransform(scale=(0.01, 0.2))),
+                   iaa.JpegCompression((0.1, 1))
                ]
                ),
     # With 10 % probability apply one the of the weather conditions
-    iaa.Sometimes(0.1, iaa.OneOf([
+    iaa.Sometimes(0.2, iaa.OneOf([
         iaa.Clouds(),
         iaa.Fog(),
         iaa.Snowflakes()
-    ])),
-    iaa.JpegCompression((0.3, 1))
+    ]))
 ])
