@@ -18,7 +18,7 @@ and therefore the models are very small.
 - Methods for creating TFRecords implemented that divides them in shards.
 - Data augmentation methods for training.
 - Implemented using TensorFlow 2.0 and keras.
-- Inference images in Tensorboard.
+- Follow the training progress in Tensorboard with evaluation images.
 - Full model and tiny model implemented.
 - Integrated with absl-py from abseil.io.
 - Documentation and comments to explain the code.
@@ -28,6 +28,7 @@ and therefore the models are very small.
 - Methods for beautiful visualization of the predictions with their bounding boxes and probabilities using W3C 
 recommendations for text color.
 - Extended image augmentation techniques.
+- TFLite conversion for object recognition.
 
 # Usage
 When training a model, a folder will be created with the date that started and the dataset used to trained.
@@ -102,7 +103,7 @@ To use the test image don't set image path.
 
     python -m models.detection.predict --img_path <img_path>
 
-## Object Detection
+## Object Recognition
 Keep in mind that this model was designed to work with the German Traffic Signs Dataset, 
 where using images of 50x50 pixels is enough. Therefore the model is pretty small.
 
@@ -123,6 +124,7 @@ Optional parameters (default values inside the parentheses) are:
 - model_name ('Recognizer'): If you want to give the model another name. Used for saving the model training history.
 - extra (''): any extra information that you want to be saved in the file with the training parameters.
 - simple_aug (False): Flag to use simple images augmentation techniques or more complex ones.
+- tflite (False): Flag to convert the model to tflite and save it in the checkpoints directory when finished training.
 
 Remember to always execute inside the src folder.
 

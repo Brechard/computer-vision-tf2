@@ -32,6 +32,7 @@ flags.DEFINE_float("lr", 2e-3, "Learning rate")
 # Boolean
 flags.DEFINE_boolean("use_cosine_lr", True, "Use cosine learning rate scheduler")
 flags.DEFINE_boolean("simple_aug", False, "Apply only simple data augmentations.")
+flags.DEFINE_boolean("tflite", False, "Convert the model to TFLite when finished training.")
 
 
 def train_recognition(_argv):
@@ -164,6 +165,12 @@ def train_recognition(_argv):
                                                 FLAGS.lr, 'Use FAKE DS\n', False, FLAGS.use_cosine_lr)
 
     helpers.save_history(FLAGS, model.model_name, model.dataset_name, history, start, 'recognition')
+
+    if FLAGS.tflite:
+        converter = tf.lite.TFLiteConverter.from_keras_model(model.inference_model)
+        tflite_model = converter.convert()
+        open(model.checkpoints_path + "model.tflite", "wb").write(tflite_model)
+
     return model, history, history_callback
 
 
