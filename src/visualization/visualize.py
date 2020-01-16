@@ -250,9 +250,10 @@ def plot_images_and_boxes(img, boxes, switch=False, multi=True, i=None, title=""
     ax.imshow(img)
     img_shape = np.array([img.shape[1], img.shape[0], img.shape[1], img.shape[0]])
     if dataset_name:
-        labels = []
         labels_map = helpers.get_labels_dict(dataset_name)
-        colors = get_colors(boxes, labels)
+
+    labels = []
+    colors = get_colors(boxes, labels)
 
     if switch:
         boxes[:, [0, 1, 2, 3]] = boxes[:, [1, 0, 3, 2]]
