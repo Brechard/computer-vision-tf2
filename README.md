@@ -6,7 +6,7 @@ For object detection, YOLOv3 has been implemented, and for object recognition se
 are available. Take into consideration that they are intended for recognition of traffic signs
 and therefore the models are very small. 
 
-![YOLOv3 architecture](https://github.com/Brechard/computer-vision-tf2/blob/master/reports/figures/YOLOv3_arch_background.png)
+![YOLOv3 architecture](https://github.com/Brechard/computer-vision-tf2/blob/master/reports/figures/models/YOLOv3_arch_background.png)
 
 ## Features
 - Training from scratch.
