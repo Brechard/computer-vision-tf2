@@ -21,18 +21,19 @@ class Recognizer:
             self.checkpoints_path, self.logs_path, self.figs_path = helpers.model_directories(model_name,
                                                                                               self.dataset_name)
         self.img_res = img_res
+        leaky_relu = lambda x: tf.keras.activations.relu(x, alpha=0.1)
         self.train_model = tf.keras.models.Sequential([
-            Conv2D(filters=32, kernel_size=(5, 5), kernel_regularizer=l2(0.0005), activation='relu',
+            Conv2D(filters=32, kernel_size=(5, 5), kernel_regularizer=l2(0.0005), activation=leaky_relu,
                    input_shape=(img_res, img_res, 3)),
             BatchNormalization(),
             MaxPool2D(pool_size=(2, 2)),
-            Conv2D(filters=64, kernel_size=(3, 3), activation='relu', kernel_regularizer=l2(0.0005)),
+            Conv2D(filters=64, kernel_size=(3, 3), activation=leaky_relu, kernel_regularizer=l2(0.0005)),
             MaxPool2D(pool_size=(2, 2)),
             Dropout(rate=0.25),
-            Conv2D(filters=64, kernel_size=(3, 3), activation='relu', kernel_regularizer=l2(0.0005)),
+            Conv2D(filters=64, kernel_size=(3, 3), activation=leaky_relu, kernel_regularizer=l2(0.0005)),
             MaxPool2D(pool_size=(2, 2)),
             Dropout(rate=0.25),
-            Conv2D(filters=128, kernel_size=(1, 1), activation='relu', kernel_regularizer=l2(0.0005)),
+            Conv2D(filters=128, kernel_size=(1, 1), activation=leaky_relu, kernel_regularizer=l2(0.0005)),
             Dropout(rate=0.5),
             Flatten(),
             Dense(self.n_classes, 'softmax')

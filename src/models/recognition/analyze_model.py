@@ -1,7 +1,6 @@
 import collections
 import json
 import os
-from random import sample
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,7 +53,7 @@ def analyze(checkpoint_dir_path: str, dataset_name: str = constants.GTSR, model_
 
     image_paths, titles, n_ploted = [], [], 0
     images_paths = os.listdir(images_path)
-    for i, image_id in enumerate(tqdm(sample(images_paths, len(images_paths)))):
+    for i, image_id in enumerate(tqdm(images_paths)):
         if 'png' not in image_id:
             continue
         total += 1
@@ -73,10 +72,12 @@ def analyze(checkpoint_dir_path: str, dataset_name: str = constants.GTSR, model_
         if verbose > 0:
             img_class_prob = np.max(img_classes_probs.numpy())
             if real_class_id == img_class_id:
-                print(constants.C_OKBLUE, "Correctly labeled as", model.labels_map_dict[str(img_class_id)].upper(),
+                print(constants.C_OKBLUE, image_id, ". Correctly labeled as",
+                      model.labels_map_dict[str(img_class_id)].upper(),
                       'with probability {:.2f} %'.format(100 * img_class_prob), constants.C_ENDC)
             else:
-                print(constants.C_FAIL, "Wrongly labeled as", model.labels_map_dict[str(img_class_id)].upper(),
+                print(constants.C_FAIL, image_id, ". Wrongly labeled as",
+                      model.labels_map_dict[str(img_class_id)].upper(),
                       ', id =',
                       img_class_id, 'with probability {:.2f} %'.format(100 * img_class_prob), '. Should have been',
                       model.labels_map_dict[real_class_id],
@@ -91,7 +92,8 @@ def analyze(checkpoint_dir_path: str, dataset_name: str = constants.GTSR, model_
             titles.append(pred_class.upper())
 
     error_rate = 100 * n_wrong / total
-    for real_class, value in classified.items():
+    for real_class in sorted(classified.keys(), key=helpers.natural_keys):
+        value = classified[real_class]
         print('Class', real_class, "({}):".format(model.labels_map_dict[real_class]))
         for pred_class, times in value.items():
             if pred_class != real_class:
