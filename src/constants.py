@@ -70,6 +70,10 @@ PROCESSED_PROJECT_FOLDER_PATH = PROJECT_PATH + 'data/processed/'
 TFRECORDS_PATH = '{}_{}_{}.records'
 #                 DATASET_TRAIN/VAL/TEST_SHARD-NSHARDS.records
 
+""" Reports """
+REPORTS_PATH = PROJECT_PATH + 'reports/'
+REPORTS_FIGS_PATH = REPORTS_PATH + 'figures/'
+
 """ Models """
 MODELS_PROJECT_PATH = PROJECT_PATH + 'models/{}/{}/'
 CHECKPOINTS = 'checkpoints/'
