@@ -1,9 +1,7 @@
-import imghdr
 import json
 import os
 from os.path import exists
 
-import cv2
 import pandas as pd
 import tensorflow as tf
 from absl import app, flags
@@ -38,25 +36,6 @@ def _int64_feature(value):
 def _float_list_feature(value):
     """Returns a float_list from a list of float / double."""
     return tf.train.Feature(float_list=tf.train.FloatList(value=value))
-
-
-def convert_to_jpeg(dataset_name: str, ppm_path: str):
-    """ Convert the PPM files to JPEG """
-
-    print(constants.C_OKBLUE, 'data.make_dataset.convert_to_jpeg. Started', constants.C_ENDC)
-    jpeg_path = constants.DATASET_PATH.format(dataset_name) + ('test/' if 'test' in ppm_path else 'train/')
-    helpers.dir_exists(jpeg_path)
-
-    for index, name in enumerate(tqdm(os.listdir(ppm_path))):
-        new_image_path = jpeg_path + name.replace('.ppm', '') + '.jpeg'
-        if exists(new_image_path):
-            continue
-        file_type = imghdr.what(ppm_path + name)
-        if file_type != 'jpeg':
-            image = cv2.imread(ppm_path + name)
-            cv2.imwrite(new_image_path, image)
-
-    print(constants.C_OKGREEN, 'data.make_dataset.convert_to_jpeg. Finished', constants.C_ENDC)
 
 
 def create_annotations_dict(dataset_name: str, train_val_test: str):
@@ -163,8 +142,6 @@ def image_example(image_encoded: str, annotations_list: list, filename: str) -> 
 
 
 def create_data(_argv):
-    # convert_to_jpeg(constants.GTSD, constants.GTSD_PPM_TRAIN_PATH)
-    # convert_to_jpeg(constants.GTSD, constants.GTSD_PPM_TEST_PATH)
     datasets = constants.ALL_DETECTION_DATA_SETS
     if FLAGS.dataset_name:
         datasets = [FLAGS.dataset_name]

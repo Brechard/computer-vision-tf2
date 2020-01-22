@@ -25,17 +25,50 @@ it is recommended to use constants.LABEL_MAP_JSON_PATH.format(<dataset_name>).
 If is is not possible to create it automatically (like with GTSD) then you should download it and add it
 manually to the same folder.
 """
+import imghdr
 import json
 import os
+from os.path import exists
 
+import cv2
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
 import constants
+import helpers
 
 columns = ['filename', 'xmin', 'ymin', 'xmax', 'ymax', 'label']
 val_proportion = 0.05
+
+
+def convert_to_jpeg(val_index, test_index):
+    """ Convert the PPM files to JPEG """
+
+    def train_val_test(image_id):
+        if int(image_id.split('.')[0]) < val_index:
+            return 'train/' + image_id.replace('.ppm', '.jpeg')
+        if int(image_id.split('.')[0]) < test_index:
+            return 'val/' + image_id.replace('.ppm', '.jpeg')
+        return 'test/' + image_id.replace('.ppm', '.jpeg')
+
+    print(constants.C_OKBLUE, 'data.make_dataset.convert_to_jpeg. Started', constants.C_ENDC)
+    jpeg_path = constants.DATASET_PATH.format(constants.GTSD)
+    helpers.dir_exists([jpeg_path + extra for extra in ['train', 'val', 'test']])
+    ppm_path = constants.DATASET_PATH.format(constants.GTSD)
+
+    for index, name in enumerate(tqdm(os.listdir(ppm_path))):
+        if '.ppm' not in name:
+            continue
+        new_image_path = jpeg_path + train_val_test(name)
+        if exists(new_image_path):
+            continue
+        file_type = imghdr.what(ppm_path + name)
+        if file_type != 'jpeg':
+            image = cv2.imread(ppm_path + name)
+            cv2.imwrite(new_image_path, image)
+
+    print(constants.C_OKGREEN, 'data.make_dataset.convert_to_jpeg. Finished', constants.C_ENDC)
 
 
 def gtsd():
@@ -43,19 +76,25 @@ def gtsd():
     The labels map files has to be in data/raw/GTSD_label_map.json since it cannot be created.
     (already added in the repository)
     """
-    labels_path = constants.EXTERNAL_ANNOTATIONS_PATH.format(constants.GTSD, 'txt')
+    label_map_path = constants.LABEL_MAP_JSON_PATH.format(constants.GTSD)
+    if not exists(label_map_path):
+        raise FileNotFoundError('Label map for the dataset ' + constants.GTSD + ' not found in ' + label_map_path)
+    test_index = 700
+    val_index = int(test_index * (1 - val_proportion))
+    convert_to_jpeg(val_index, test_index)
+    labels_path = constants.DATASET_PATH.format(constants.GTSD) + 'gt.txt'
     labels = pd.read_csv(labels_path, sep=';', names=columns)
     labels['filename'] = labels['filename'].apply(lambda x: x.replace('ppm', 'jpeg'))
     file_names = labels['filename'].apply(lambda x: int(x.replace('.jpeg', '')))
-    train_val_df = labels[file_names < 700]
+    train_val_df = labels[file_names < test_index]
     file_names_train_val = train_val_df['filename'].apply(lambda x: int(x.replace('.jpeg', '')))
 
-    train_indexes = file_names_train_val < int(700 * (1 - val_proportion))
-    val_indexes = file_names_train_val >= int(700 * (1 - val_proportion))
+    train_indexes = file_names_train_val < val_index
+    val_indexes = file_names_train_val >= val_index
 
     train_df = train_val_df[train_indexes]
     val_df = train_val_df[val_indexes]
-    test_df = labels[file_names >= 700]
+    test_df = labels[file_names >= test_index]
 
     train_df.to_csv(constants.ANNOTATIONS_CSV_PATH.format(constants.GTSD, constants.TRAIN), index=False)
     val_df.to_csv(constants.ANNOTATIONS_CSV_PATH.format(constants.GTSD, constants.VAL), index=False)
